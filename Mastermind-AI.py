@@ -5,10 +5,14 @@ import collections
 
 # Global Variables
 
-k = 8
-N = 4
+NUMBER_OF_COLOURS = 8
+PATTERN_SIZE = 4
+POPULATION_SIZE = 100
+MAX_GENERATION = 100000
 
-TO_GUESS = [random.randint(0, k-1) for _ in range(N)]
+TO_GUESS = [random.randint(0, NUMBER_OF_COLOURS-1) for _ in range(PATTERN_SIZE)]
+INITIAL_GUESS = [random.randint(0, NUMBER_OF_COLOURS-1) for _ in range(PATTERN_SIZE)]
+HISTORY = []
 
 #########################################
 ############# MasterMind AI #############
@@ -63,7 +67,7 @@ def score(correctly_placed, correct_colour_but_incorrectly_placed):
         return 1
     else:
         # This allows to never have identical scores for different values of the (p, m) tuple
-        return (k * correctly_placed) + correct_colour_but_incorrectly_placed
+        return (NUMBER_OF_COLOURS * correctly_placed) + correct_colour_but_incorrectly_placed
 
 # Question 3.2 #
 # We now want to be capable of evaluating the quality of a candidate solution 'c' compared to an
@@ -80,7 +84,7 @@ def score(correctly_placed, correct_colour_but_incorrectly_placed):
 
 def eval(current_candidate, previous_candidate):
     
-    previous_candidate_p, previous_candidate_m = compare(previous_candidate, TO_GUESS)
+    previous_candidate_p, previous_candidate_m = get_pins(previous_candidate)
     virtual_p, virtual_m = compare(previous_candidate, current_candidate)
 
     previous_candidate_score = score(previous_candidate_p, previous_candidate_m)
@@ -89,6 +93,7 @@ def eval(current_candidate, previous_candidate):
     return abs(previous_candidate_score - virtual_score)
 
 def compare(candidate_1, candidate_2):
+
     p = 0
     m = 0
 
@@ -112,17 +117,28 @@ def compare(candidate_1, candidate_2):
             
     return p, m
 
+# Gets tha values 'p' and 'm' from a given candidate compared to the solution. Acts as a second 
+# player
+def get_pins(candidate):
+
+    return compare(candidate, TO_GUESS)
+
 # Question 3.3 #
 # Deduce the fitness function that compares a candidate combination 'c' with the history of all tuples
 # (p, m) that we're trying to minimise.
 
 def fitness(current_candidate):
 
-    return 0
+    result = 0
+
+    for i in range(len(HISTORY)):
+        result += eval(current_candidate, HISTORY[i])
+
+    return result/len(HISTORY)
 
 #########################################
 ################ Step 2 #################
-##### Selection, Crossing, Mutation #####
+#### Selection, Crossover, Mutation #####
 #########################################
 
 # A genetic algorithm manipulates a population of candidate solutions. Here we'll consider that its
@@ -133,28 +149,66 @@ def fitness(current_candidate):
 # create the next generation of candidates
 
 """
+Get the (p, m) values for the N candidates, order them in descending order for the values of 'p' then
+the values of 'm' then choose the best half of candidates
 """
+
+def select_m_best(generation):
+
+    temporary_list = []
+
+    for i in range(len(generation)):
+        p, m = get_pins(generation[i])
+        temporary_list.append((p, m, generation[i]))
+
+    sorted_candidates = sorted(temporary_list, key=lambda element: (element[0], element[1]), reverse=True)
+
+    return sorted_candidates[:len(sorted_candidates)//2]
 
 # Question 2 #
 # Propose one or more simple mutation operations on a candidate solution
 
 """
+Choose two positions in the candidate and swap them
 """
+
+def mutate(candidate):
+    print(candidate)
+    random_indexes = random.sample(range(PATTERN_SIZE), 2)
+
+    temp = candidate[random_indexes[0]]
+    candidate[random_indexes[0]] = candidate[random_indexes[1]]
+    candidate[random_indexes[1]] = temp
+    print(candidate)
+
+    return candidate
 
 # Question 3 #
 # Propose one or more crossing operations transforming two candidate solutions into one new candidate
 # solution. Make sure that the new candidate solutions are valid.
 
 """
+Select a random starting index and add the next N/2 values from the first parent into the resulting 
+candidate. Go to the next index value and check that the value at that index in the second parent
+isn't already in the resulting candidate, if it is keep advancing the index (in a looping manner).
+Once a value not already in the resulting candidate is found, add it at the next index and keep
+going until the resulting candidate is full
 """
-c1 = [random.randint(0, k-1) for _ in range(N)]
-c2 = [random.randint(0, k-1) for _ in range(N)]
 
-print("Solution")
-print(TO_GUESS)
-print("Candidate 1")
-print(c1)
-print("Candidate 2")
-print(c2)
+def crossover(parent_candidate_1, parent_candidate_2):
+    child_candidate = []
+    
+    ### TO DO ###
 
-print(eval(c1, c2))
+    return child_candidate
+
+if __name__ == "__main__":
+    generation = []
+
+    for i in range(POPULATION_SIZE):
+        generation.append([random.randint(0, NUMBER_OF_COLOURS-1) for _ in range(PATTERN_SIZE)])
+
+    print("Solution")
+    print(TO_GUESS)
+    print("Generation")
+    print(select_m_best(generation))
