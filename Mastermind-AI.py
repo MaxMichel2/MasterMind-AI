@@ -13,12 +13,12 @@ import sys
 
 
 # Question 1 #
-# Propose a representation (coding) for the pawn combinations
+# Propose a representation (coding) for the pawn combinations.
 
 """
 Use an array where each index contains an integer in the range [0;k[ (see following question for \
-what k is)
-Each integer in said range will represent a colour
+what k is).
+Each integer in said range will represent a colour.
 
 Example: [0, 4, 3, 5] <= One possible combination
          [7, 4, 1, 2] <= Another possible combination
@@ -26,26 +26,26 @@ Example: [0, 4, 3, 5] <= One possible combination
 
 # Question 2 #
 # How many candidate solutions are there for a combination of N pawns of k colours ?
-# Deduce the number of combinations for 4 pawns with 8 colours
+# Deduce the number of combinations for 4 pawns with 8 colours.
 
 """
-If we have no restrictions on duplications, we have k^N possibilities
+If we have no restrictions on duplications, we have k^N possibilities.
 
-for N = 4 and k = 8, we have a total of 4096 possibilities
+for N = 4 and k = 8, we have a total of 4096 possibilities.
 """
 
 # Question 3 #
 # The difficult question for this project is the evaluation of the quality of a candidation solution
-# based of the previous solutions. We'll decompose this into multiple questions
+# based of the previous solutions. We'll decompose this into multiple questions.
 
 # Recall that at each turn, when the algorithm proposes a candidate solution 'c', the game returns
 # two integers (p_c, m_c) by comparing to the previously proposed solution, which are the number of
-# correctly placed pawns 'p' and the number of pawns of the right colour but incorrectly placed 'm'
+# correctly placed pawns 'p' and the number of pawns of the right colour but incorrectly placed 'm'.
 
 # Question 3.1 #
-# Propose a score(p, m) function (p_c, m_c are positive or null and score returns a strictly positive
-# integer) that converts the number of correctly placed pawns 'p' and the number of correct colours 
-# but incorrectly placed pawns 'm' into a positive integer expressing a score
+# Propose a score(p => N, m => N) => N+ function that converts the number of correctly placed pawns 
+# 'p' and the number of correct colours but incorrectly placed pawns 'm' into a positive integer 
+# expressing a score.
 
 def score(correctly_placed, correct_colour_but_incorrectly_placed):
     
@@ -59,10 +59,31 @@ def score(correctly_placed, correct_colour_but_incorrectly_placed):
         # and by dividing by 100 (with the floor function) we get the number of correctly placed
         # pawns.
         # This is probably unnecessary in the scope of this project but could be useful if the 
-        # values of 'N' and 'k' were to increase drastically
+        # values of 'N' and 'k' were to increase drastically.
         return (100 * correctly_placed) + correct_colour_but_incorrectly_placed
 
 # Question 3.2 #
+# We now want to be capable of evaluating the quality of a candidate solution 'c' compared to an
+# already played solution 'c_j'.
+# To evaluate the quality of 'c', we'll suppose that it is the correct solution. In this case, the 
+# virtual score obtained by 'c_j' compared to 'c' should be as close as possible to the score already 
+# obtained by 'c_j' noted 'sc_j'.
+
+# Deduce an eval(c, c_j) => N+ function which determines the difference between the virtual score of 
+# 'c_j' compared to 'c' and the score already obtained by 'c_j'.
+# For this, you'll need the compare(c1, c2) => (p => N, m => N) function which returns 
+
+def eval(current_candidate, previous_candidate):
+
+    return 0
+
+def compare(candidate_1, candidate_2):
+
+    return 0
+
+# Question 3.3 #
+# Deduce the fitness function that compares a candidate combination 'c' with the history of all tuples
+# (p, m) that we're trying to minimise.
 
 """
 """
@@ -72,17 +93,25 @@ def score(correctly_placed, correct_colour_but_incorrectly_placed):
 ##### Selection, Crossing, Mutation #####
 #########################################
 
+# A genetic algorithm manipulates a population of candidate solutions. Here we'll consider that its
+# size 'N' is sufficently large to allow for a good exploration at each game turn.
+
 # Question 1 #
+# Propose an algorithm or an approach for the selection of the 'm' best canididates (m < N) that will
+# create the next generation of candidates
 
 """
 """
 
 # Question 2 #
+# Propose one or more simple mutation operations on a candidate solution
 
 """
 """
 
 # Question 3 #
+# Propose one or more crossing operations transforming two candidate solutions into one new candidate
+# solution. Make sure that the new candidate solutions are valid.
 
 """
 """
