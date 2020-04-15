@@ -62,13 +62,8 @@ def score(correctly_placed, correct_colour_but_incorrectly_placed):
     elif correctly_placed == 0 and correct_colour_but_incorrectly_placed == 0:
         return 1
     else:
-        # This is a way of coding the correct placement of full pawns or only colours
-        # By doing a modulo with 100, we get the number of correct colours incorrectly placed
-        # and by dividing by 100 (with the floor function) we get the number of correctly placed
-        # pawns.
-        # This is probably unnecessary in the scope of this project but could be useful if the 
-        # values of 'N' and 'k' were to increase drastically.
-        return (100 * correctly_placed) + correct_colour_but_incorrectly_placed
+        # This allows to never have identical scores for different values of the (p, m) tuple
+        return (k * correctly_placed) + correct_colour_but_incorrectly_placed
 
 # Question 3.2 #
 # We now want to be capable of evaluating the quality of a candidate solution 'c' compared to an
@@ -115,7 +110,6 @@ def compare(candidate_1, candidate_2):
                         correct_colour_but_incorrectly_placed_list.append(j)
                         break
             
-
     return p, m
 
 # Question 3.3 #
@@ -155,5 +149,12 @@ def fitness(current_candidate):
 """
 c1 = [random.randint(0, k-1) for _ in range(N)]
 c2 = [random.randint(0, k-1) for _ in range(N)]
+
+print("Solution")
+print(TO_GUESS)
+print("Candidate 1")
+print(c1)
+print("Candidate 2")
+print(c2)
 
 print(eval(c1, c2))
