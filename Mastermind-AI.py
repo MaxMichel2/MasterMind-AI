@@ -1,6 +1,14 @@
 import random
 import math
 import sys
+import collections
+
+# Global Variables
+
+k = 8
+N = 4
+
+TO_GUESS = [random.randint(0, k-1) for _ in range(N)]
 
 #########################################
 ############# MasterMind AI #############
@@ -71,22 +79,52 @@ def score(correctly_placed, correct_colour_but_incorrectly_placed):
 
 # Deduce an eval(c, c_j) => N+ function which determines the difference between the virtual score of 
 # 'c_j' compared to 'c' and the score already obtained by 'c_j'.
-# For this, you'll need the compare(c1, c2) => (p => N, m => N) function which returns 
+# For this, you'll need the compare(c1, c2) => (p => N, m => N) function which returns the number of
+# colours of c2 correctly placed in c1 (p) and the number of colours present but incorrectly placed
+# in c1 (m)
 
 def eval(current_candidate, previous_candidate):
+    
+    previous_candidate_p, previous_candidate_m = compare(previous_candidate, TO_GUESS)
+    virtual_p, virtual_m = compare(previous_candidate, current_candidate)
 
-    return 0
+    previous_candidate_score = score(previous_candidate_p, previous_candidate_m)
+    virtual_score = score(virtual_p, virtual_m)
+
+    return abs(previous_candidate_score - virtual_score)
 
 def compare(candidate_1, candidate_2):
+    p = 0
+    m = 0
 
-    return 0
+    # Lists that will store the indexes associated
+    correctly_placed_list = []
+    correct_colour_but_incorrectly_placed_list = []
+
+    for i in range(len(candidate_1)):
+        if candidate_1[i] == candidate_2[i]:
+            p += 1
+            correctly_placed_list.append(i)
+
+    for i in range(len(candidate_1)):
+        if (i in correctly_placed_list) == False:
+            for j in range(len(candidate_1)):
+                if ((j in correctly_placed_list) == False) and ((j in correct_colour_but_incorrectly_placed_list) == False):
+                    if candidate_1[i] == candidate_2[j]:
+                        m += 1
+                        correct_colour_but_incorrectly_placed_list.append(j)
+                        break
+            
+
+    return p, m
 
 # Question 3.3 #
 # Deduce the fitness function that compares a candidate combination 'c' with the history of all tuples
 # (p, m) that we're trying to minimise.
 
-"""
-"""
+def fitness(current_candidate):
+
+    return 0
 
 #########################################
 ################ Step 2 #################
@@ -115,3 +153,7 @@ def compare(candidate_1, candidate_2):
 
 """
 """
+c1 = [random.randint(0, k-1) for _ in range(N)]
+c2 = [random.randint(0, k-1) for _ in range(N)]
+
+print(eval(c1, c2))
