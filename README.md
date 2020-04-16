@@ -26,13 +26,15 @@ To run the code, simply clone this repository on your machine, open a terminal/c
 ### Extra control
 
 There are 7 different parameters that can be modified directly at the command line for you to tailor the behavious of the program:
-* PATTERN_SIZE
-* NUMBER_OF_COLOURS
-* POPULATION_SIZE
-* MAX_GENERATION
-* MAX_SIZE
-* MUTATION_PROBABILITY
-* CROSSOVER_PROBABILITY
+* *PATTERN_SIZE* controls the length of the code that the AI has to guess
+* *NUMBER_OF_COLOURS* controls the number of different "colours" each code can contain
+* *POPULATION_SIZE* controls the number of candidates in each generation
+* *MAX_GENERATION* controls the maximum number of generations produced before taking a guess
+* *MAX_SIZE* controls the maximum amount of eligible candidates per iteration. If the algorithm finds more than `MAX_SIZE` eligible candidates, it will stop to take a guess
+* *MUTATION_PROBABILITY* controls the probability of mutation in the algorithm
+* *CROSSOVER_PROBABILITY* controls the probability of crossover in the algorithm
 
-*PATTERN_SIZE* controls the length of the code that the AI has to guess  
-*NUMBER_OF_COLOURS* controls the number of different "colours" each code can contain
+## Improvements
+
+* Work on the generation of a new population
+    * Attempt Fitness Proportionate Selection for Crossover

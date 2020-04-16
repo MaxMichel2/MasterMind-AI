@@ -12,7 +12,7 @@ POPULATION_SIZE = 100
 MAX_GENERATION = 20
 MAX_SIZE = 60
 MUTATION_PROBABILITY = 0.02
-CROSSOVER_PROBABILITY = 0.02
+CROSSOVER_PROBABILITY = 0.7
 
 TO_GUESS = []
 INITIAL_GUESS = []
@@ -226,11 +226,11 @@ def mutate(candidate):
     """
     # Define a random position and colour to be placed in that position
     random_index = random.randint(0, PATTERN_SIZE-1)
-    random_colour = random.randint(0, NUMBER_OF_COLOURS-1)
+    random_colour = random.randrange(0, NUMBER_OF_COLOURS)
 
     # While the colour that was chosen is the same as the one already there, find a new colour
     while random_colour == candidate[random_index]:
-        random_colour = random.randint(0, NUMBER_OF_COLOURS-1)
+        random_colour = random.randrange(0, NUMBER_OF_COLOURS)
 
     # Swap the new colour
     candidate[random_index] = random_colour
@@ -254,7 +254,7 @@ def crossover(parent_candidate_1, parent_candidate_2):
     child_candidate = [-1 for _ in range(PATTERN_SIZE)]
 
     # Start at a random index for the parents
-    parent_index = random.randint(0, PATTERN_SIZE-1)
+    parent_index = random.randrange(0, PATTERN_SIZE)
 
     # Add N/2 elements of the first parent to the child (at the same position)
     for i in range(PATTERN_SIZE//2):
@@ -287,7 +287,7 @@ def get_pins(candidate):
 
 def intialise_population():
 
-    return [[random.randint(0, NUMBER_OF_COLOURS-1) for _ in range(PATTERN_SIZE)] for _ in range(POPULATION_SIZE)]
+    return [[random.randrange(0, NUMBER_OF_COLOURS) for _ in range(PATTERN_SIZE)] for _ in range(POPULATION_SIZE)]
 
 # Apply the mutation and crossover to the generation given as input and return the new modified
 # generation
@@ -296,23 +296,26 @@ def generate_new_population(generation):
     
     new_generation = []
 
-    for i in range(len(generation)):
-        new_generation.append(generation[i])
-
-    for i in range(len(generation)):
-        if len(new_generation) < POPULATION_SIZE:
-            mutation = random.random()
-            if mutation <= MUTATION_PROBABILITY:
-                new_generation.append(mutate(generation[i]))
+    # Crossover first 
+    for i in range(len(generation)):       
+        cross = random.random()
+        if cross <= CROSSOVER_PROBABILITY:
+            parent_1 = generation[i]
+            parent_2 = generation[(i+1)%len(generation)]
+            child_candidate = crossover(parent_1, parent_2)
+            new_generation.append(child_candidate)
+        else:
+            new_generation.append(generation[i])
             
-            cross = random.random()
-            if cross <= CROSSOVER_PROBABILITY:
-                parent_1 = generation[i]
-                parent_2 = generation[(i+1)%len(generation)]
-                new_generation.append(crossover(parent_1, parent_2))
+        # Then mutation
+        mutation = random.random()
+        if mutation <= MUTATION_PROBABILITY:
+            new_generation.append(mutate(generation[i]))
+        else:
+            new_generation.append(generation[i])
 
     while len(new_generation) < POPULATION_SIZE:
-        random_candidate = [random.randint(0, NUMBER_OF_COLOURS-1) for _ in range(PATTERN_SIZE)]
+        random_candidate = [random.randrange(0, NUMBER_OF_COLOURS) for _ in range(PATTERN_SIZE)]
         if random_candidate not in new_generation:
             new_generation.append(random_candidate)
     
@@ -331,24 +334,24 @@ POPULATION_SIZE (default = 100)\n\t\
 MAX_GENERATION (default = 20)\n\t\
 MAX_SIZE (default = 60)\n\t\
 MUTATION_PROBABILITY (default = 0.02)\n\t\
-CROSSOVER_PROBABILITY (default = 0.02)")
+CROSSOVER_PROBABILITY (default = 0.7)")
         exit(1)
     else:
         global_variables = [-1 for _ in range(7)]
         for i in range(1, len(sys.argv)):
-            global_variables[i-1] = int(sys.argv[i]) # Start at 1 since sys.argv[0] is the script
+            global_variables[i-1] = sys.argv[i] # Start at 1 since sys.argv[0] is the script
 
-        PATTERN_SIZE = global_variables[0] if global_variables[0] != -1 else 4
-        NUMBER_OF_COLOURS = global_variables[1] if global_variables[1] != -1 else 8
-        POPULATION_SIZE = global_variables[2] if global_variables[2] != -1 else 100
-        MAX_GENERATION = global_variables[3] if global_variables[3] != -1 else 20
-        MAX_SIZE = global_variables[4] if global_variables[4] != -1 else 60
-        MUTATION_PROBABILITY = global_variables[5] if global_variables[5] != -1 else 0.02
-        CROSSOVER_PROBABILITY = global_variables[6] if global_variables[6] != -1 else 0.02
+        PATTERN_SIZE = int(global_variables[0]) if int(global_variables[0]) != -1 else 4
+        NUMBER_OF_COLOURS = int(global_variables[1]) if int(global_variables[1]) != -1 else 8
+        POPULATION_SIZE = int(global_variables[2]) if int(global_variables[2]) != -1 else 100
+        MAX_GENERATION = int(global_variables[3]) if int(global_variables[3]) != -1 else 20
+        MAX_SIZE = int(global_variables[4]) if int(global_variables[4]) != -1 else 60
+        MUTATION_PROBABILITY = float(global_variables[5]) if float(global_variables[5]) != -1 else 0.02
+        CROSSOVER_PROBABILITY = float(global_variables[6]) if float(global_variables[6]) != -1 else 0.02
 
         # Set up an initial code and guess
-        TO_GUESS = [random.randint(0, NUMBER_OF_COLOURS-1) for _ in range(PATTERN_SIZE)]
-        INITIAL_GUESS = [random.randint(0, NUMBER_OF_COLOURS-1) for _ in range(PATTERN_SIZE)]
+        TO_GUESS = [random.randrange(0, NUMBER_OF_COLOURS) for _ in range(PATTERN_SIZE)]
+        INITIAL_GUESS = [random.randrange(0, NUMBER_OF_COLOURS) for _ in range(PATTERN_SIZE)]
     
     # Counter for the number of iterations, inital 'p' and 'm' for the algorithm stop condition and
     # a list to store the possible candidates from the given iteration
