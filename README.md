@@ -12,8 +12,13 @@ I won't go over the rules of the game, you can find them [here](https://en.wikip
 
 ## Section 2: Genetic algorithm components
 
-Again, this section contains basic genetic algorithm elments including the following:
+This section contains basic genetic algorithm elments including the following:
 * Selection
 * Mutation
 * Crossover
 
+Each component is clearly identifiable and the way each of them work is explained in quite some detail. If you have any experience with AI and/or genetic algorithms, you shouldn't feel lost. If this is new to you, you should still be able to get a general understanding about what's going on.
+
+## Running the code
+
+To run the code, simply clone this repository on your machine, open a terminal/cmd, navigate to the cloned folder and run the following: `python MasterMind-AI.py`
