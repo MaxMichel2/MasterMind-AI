@@ -48,6 +48,9 @@ Example: [0, 4, 3, 5] <= One possible combination
 If we have no restrictions on duplications, we have k^N possibilities.
 
 for N = 4 and k = 8, we have a total of 4096 possibilities.
+
+We can also note that the impact of N on the overall number of possibilites is much larger than the
+impact of k.
 """
 
 # Question 3 #
@@ -87,10 +90,11 @@ def score(correctly_placed, correct_colour_but_incorrectly_placed):
 # in c1 (m)
 
 def eval(current_candidate, previous_candidate):
+
     # Get the (p, m) values for the previous candidate (obtained from the 'second' player) and when
     # comparing the new candidate with the previous.
     previous_candidate_p, previous_candidate_m = get_pins(previous_candidate)
-    virtual_p, virtual_m = compare(previous_candidate, current_candidate)
+    virtual_p, virtual_m = compare(current_candidate, previous_candidate)
 
     # Get their associated scores
     previous_candidate_score = score(previous_candidate_p, previous_candidate_m)
@@ -100,6 +104,7 @@ def eval(current_candidate, previous_candidate):
     return abs(previous_candidate_score - virtual_score)
 
 def compare(candidate_1, candidate_2):
+
     # Set p and m to 0
     p = 0
     m = 0
@@ -108,6 +113,7 @@ def compare(candidate_1, candidate_2):
     correctly_placed_list = []
     correct_colour_but_incorrectly_placed_list = []
 
+    # Find the number of correctly placed pins in candidate_1 compared to candidate_2
     for i in range(PATTERN_SIZE):
         if candidate_1[i] == candidate_2[i]:
             p += 1
@@ -119,9 +125,9 @@ def compare(candidate_1, candidate_2):
             for j in range(PATTERN_SIZE):
                 # Check that the next loop index isn't in either list (so it can be added)...
                 if ((j in correctly_placed_list) == False) and ((j in correct_colour_but_incorrectly_placed_list) == False):
-                    # Check that the value of first index in the first candidate that isn't correct is 
-                    # the same as that of the value of the second index in the second candidate still 
-                    # available to be added
+                    # Check that the value of first index in the first candidate that isn't correct 
+                    # is the same as that of the value of the second index in the second candidate 
+                    # still available to be added
                     if candidate_1[i] == candidate_2[j]:
                         m += 1
                         correct_colour_but_incorrectly_placed_list.append(j)
@@ -129,23 +135,16 @@ def compare(candidate_1, candidate_2):
             
     return p, m
 
-# Gets tha values 'p' and 'm' from a given candidate compared to the solution. Acts as a second 
-# player
-
-def get_pins(candidate):
-
-    return compare(candidate, TO_GUESS)
-
 # Question 3.3 #
-# Deduce the fitness function that compares a candidate combination 'c' with the history of all tuples
-# (p, m) that we're trying to minimise.
+# Deduce the fitness function that compares a candidate combination 'c' with the history of all 
+# tuples (p, m) that we're trying to minimise.
 
 def fitness(current_candidate):
 
     result = 0
 
-    # To make sure HISTORY is never empty, we always start with an initial guess (more often incorrect
-    # than correct)
+    # To make sure HISTORY is never empty, we always start with an initial guess (more often 
+    # incorrect than correct)
     for i in range(len(HISTORY)):
         result += eval(current_candidate, HISTORY[i])
 
@@ -176,9 +175,9 @@ OR
 
 Return the candidates with a fitness of 0. If there are none, return the single candidate with
 the lowest fitness
-"""
 
-########## DO THE SECOND SELECTION THING BECAUSE IT WILL WORK BETTER (Hopefully)
+Here I used the second approach since it feels more appropriate
+"""
 
 def select_m_best(generation):
 
@@ -189,13 +188,15 @@ def select_m_best(generation):
         candidate_fitness = fitness(generation[i])
         m_best.append((candidate_fitness, generation[i]))
 
-    # Sort the list and divide their fitness to get a normalized value
+    # Sort the list and extract their fitness into a new list
     m_best = sorted(m_best, key=lambda element: element[0])
     fitness_values = [candidate_info[0] for candidate_info in m_best]
 
+    # If there are no candidates with a fitness of 0, choose the one with the lowest fitness
     if 0 not in fitness_values:
         return [m_best[0][1]]
     
+    # Find the index of the first non null value in the fitness list if there is one
     try:
         first_non_null_value = next(x[0] for x in enumerate(fitness_values) if x[1] > 0)
     except StopIteration:
@@ -207,7 +208,7 @@ def select_m_best(generation):
 # Propose one or more simple mutation operations on a candidate solution
 
 """
-Choose two positions in the candidate and swap them
+Choose two positions in the candidate and swap them (This is a permutation)
 OR
 Replace the colour at one random index
 """
@@ -223,12 +224,15 @@ def mutate(candidate):
     candidate[random_indexes[1]] = temp
     print(candidate)
     """
+    # Define a random position and colour to be placed in that position
     random_index = random.randint(0, PATTERN_SIZE-1)
     random_colour = random.randint(0, NUMBER_OF_COLOURS-1)
 
-    while random_colour != candidate[random_index]:
+    # While the colour that was chosen is the same as the one already there, find a new colour
+    while random_colour == candidate[random_index]:
         random_colour = random.randint(0, NUMBER_OF_COLOURS-1)
 
+    # Swap the new colour
     candidate[random_index] = random_colour
 
     return candidate
@@ -272,9 +276,21 @@ def crossover(parent_candidate_1, parent_candidate_2):
 ##### Full AI Genetic Algorithm Loop ####
 #########################################
 
+# Gets the values 'p' and 'm' from a given candidate compared to the solution. Acts as a second 
+# player
+
+def get_pins(candidate):
+
+    return compare(candidate, TO_GUESS)
+
+# Create a population of random candidates
+
 def intialise_population():
 
     return [[random.randint(0, NUMBER_OF_COLOURS-1) for _ in range(PATTERN_SIZE)] for _ in range(POPULATION_SIZE)]
+
+# Apply the mutation and crossover to the generation given as input and return the new modified
+# generation
 
 def generate_new_population(generation):
     
@@ -302,15 +318,25 @@ def generate_new_population(generation):
     
     return new_generation
 
+# Main loop
+
 if __name__ == "__main__":
 
+    # Extract parameters from the user if any were given
     if len(sys.argv) > 8:
-        print("Only 7 variables can be set:\n\tPATTERN_SIZE (default = 4)\n\tNUMBER_OF_COLOURS (default = 8)\n\tPOPULATION_SIZE (default = 100)\n\tMAX_GENERATION (default = 20)\n\tMAX_SIZE (default = 60)\n\tMUTATION_PROBABILITY (default = 0.02)\n\tCROSSOVER_PROBABILITY (default = 0.02)")
+        print("Only 7 variables can be set:\n\t\
+PATTERN_SIZE (default = 4)\n\t\
+NUMBER_OF_COLOURS (default = 8)\n\t\
+POPULATION_SIZE (default = 100)\n\t\
+MAX_GENERATION (default = 20)\n\t\
+MAX_SIZE (default = 60)\n\t\
+MUTATION_PROBABILITY (default = 0.02)\n\t\
+CROSSOVER_PROBABILITY (default = 0.02)")
         exit(1)
     else:
         global_variables = [-1 for _ in range(7)]
         for i in range(1, len(sys.argv)):
-            global_variables[i-1] = int(sys.argv[i])
+            global_variables[i-1] = int(sys.argv[i]) # Start at 1 since sys.argv[0] is the script
 
         PATTERN_SIZE = global_variables[0] if global_variables[0] != -1 else 4
         NUMBER_OF_COLOURS = global_variables[1] if global_variables[1] != -1 else 8
@@ -320,36 +346,42 @@ if __name__ == "__main__":
         MUTATION_PROBABILITY = global_variables[5] if global_variables[5] != -1 else 0.02
         CROSSOVER_PROBABILITY = global_variables[6] if global_variables[6] != -1 else 0.02
 
+        # Set up an initial code and guess
         TO_GUESS = [random.randint(0, NUMBER_OF_COLOURS-1) for _ in range(PATTERN_SIZE)]
         INITIAL_GUESS = [random.randint(0, NUMBER_OF_COLOURS-1) for _ in range(PATTERN_SIZE)]
     
+    # Counter for the number of iterations, inital 'p' and 'm' for the algorithm stop condition and
+    # a list to store the possible candidates from the given iteration
     iteration_counter = 0
     guess_p, guess_m = get_pins(INITIAL_GUESS)
-
     iteration_candidates = []
 
+    # Run while all pins aren't correctly placed
     while guess_p != PATTERN_SIZE:
-        HISTORY.append(INITIAL_GUESS)
+        HISTORY.append(INITIAL_GUESS) # This makes sure HISTORY is never empty (hence no division by 0)
         iteration_counter += 1
         generation_counter = 1
         generation = intialise_population()
         print("Current iteration:", iteration_counter)
 
+        # While we haven't gone through the sepcified number of generations and found enough candidates
         while generation_counter <= MAX_GENERATION and len(iteration_candidates) <= MAX_SIZE:
-            generation = generate_new_population(generation)
+            generation = generate_new_population(generation) # Modify current generation
             print("Current generation:", generation_counter)
-            generation = select_m_best(generation)
+            generation = select_m_best(generation) # Choose the best candidates
 
+            # Add them to the list of possible candidates if they aren't already in it
             for candidate in generation:
                 if candidate not in iteration_candidates:
                     iteration_candidates.append(candidate)
             
             generation_counter += 1
         
+        # Choose a random candidate from those available, guess it and add it to the history
         guess_index = random.randint(0, len(iteration_candidates)-1)
         guess = iteration_candidates[guess_index]
         HISTORY.append(guess)
-        guess_p, guess_m = get_pins(guess)
+        guess_p, guess_m = get_pins(guess) # Extract the 'p' and 'm' from the guess
         print("Guess at iteration", iteration_counter," is", guess)
         iteration_candidates = []
     
