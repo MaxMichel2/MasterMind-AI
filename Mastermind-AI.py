@@ -83,33 +83,41 @@ def score(correctly_placed, correct_colour_but_incorrectly_placed):
 # in c1 (m)
 
 def eval(current_candidate, previous_candidate):
-    
+    # Get the (p, m) values for the previous candidate (obtained from the 'second' player) and when
+    # comparing the new candidate with the previous.
     previous_candidate_p, previous_candidate_m = get_pins(previous_candidate)
     virtual_p, virtual_m = compare(previous_candidate, current_candidate)
 
+    # Get their associated scores
     previous_candidate_score = score(previous_candidate_p, previous_candidate_m)
     virtual_score = score(virtual_p, virtual_m)
 
+    # Use abs() to always have postive or null values
     return abs(previous_candidate_score - virtual_score)
 
 def compare(candidate_1, candidate_2):
-
+    # Set p and m to 0
     p = 0
     m = 0
 
-    # Lists that will store the indexes associated
+    # Lists that will store the associated indexes
     correctly_placed_list = []
     correct_colour_but_incorrectly_placed_list = []
 
-    for i in range(len(candidate_1)):
+    for i in range(PATTERN_SIZE):
         if candidate_1[i] == candidate_2[i]:
             p += 1
             correctly_placed_list.append(i)
 
-    for i in range(len(candidate_1)):
+    for i in range(PATTERN_SIZE):
+        # If the current index isn't part of the ones that are correct...
         if (i in correctly_placed_list) == False:
-            for j in range(len(candidate_1)):
+            for j in range(PATTERN_SIZE):
+                # Check that the next loop index isn't in either list (so it can be added)...
                 if ((j in correctly_placed_list) == False) and ((j in correct_colour_but_incorrectly_placed_list) == False):
+                    # Check that the value of first index in the first candidate that isn't correct is 
+                    # the same as that of the value of the second index in the second candidate still 
+                    # available to be added
                     if candidate_1[i] == candidate_2[j]:
                         m += 1
                         correct_colour_but_incorrectly_placed_list.append(j)
@@ -119,6 +127,7 @@ def compare(candidate_1, candidate_2):
 
 # Gets tha values 'p' and 'm' from a given candidate compared to the solution. Acts as a second 
 # player
+
 def get_pins(candidate):
 
     return compare(candidate, TO_GUESS)
@@ -131,6 +140,8 @@ def fitness(current_candidate):
 
     result = 0
 
+    # To make sure HISTORY is never empty, we always start with an initial guess (more often incorrect
+    # than correct)
     for i in range(len(HISTORY)):
         result += eval(current_candidate, HISTORY[i])
 
@@ -157,13 +168,17 @@ def select_m_best(generation):
 
     temporary_list = []
 
+    # Iterate through all the candidates of the generation
     for i in range(len(generation)):
         p, m = get_pins(generation[i])
         temporary_list.append((p, m, generation[i]))
 
+    # Sort the (p, m) for each candidate by p then m
     sorted_candidates = sorted(temporary_list, key=lambda element: (element[0], element[1]), reverse=True)
 
-    return sorted_candidates[:len(sorted_candidates)//2]
+    # Select the 3rd element in the tuple in the sorted list (the actual candidate) and return them
+    # as a list
+    return [candidate_info[2] for candidate_info in sorted_candidates[:len(sorted_candidates)//2]]
 
 # Question 2 #
 # Propose one or more simple mutation operations on a candidate solution
@@ -173,9 +188,10 @@ Choose two positions in the candidate and swap them
 """
 
 def mutate(candidate):
-    print(candidate)
+    # Choose two random indexes
     random_indexes = random.sample(range(PATTERN_SIZE), 2)
 
+    # Swap them
     temp = candidate[random_indexes[0]]
     candidate[random_indexes[0]] = candidate[random_indexes[1]]
     candidate[random_indexes[1]] = temp
@@ -196,19 +212,54 @@ going until the resulting candidate is full
 """
 
 def crossover(parent_candidate_1, parent_candidate_2):
-    child_candidate = []
-    
-    ### TO DO ###
+    # Initialise a child candidate full of -1
+    child_candidate = [-1 for _ in range(PATTERN_SIZE)]
+
+    # Start at a random index for the parents
+    parent_index = random.randint(0, PATTERN_SIZE-1)
+
+    # Add N/2 elements of the first parent to the child (at the same position)
+    for i in range(PATTERN_SIZE//2):
+        child_candidate[(parent_index+i)%PATTERN_SIZE] = parent_candidate_1[(parent_index+i)%PATTERN_SIZE]
+
+    # Set the parent to the next index (use of modulo to stay in index bounds)
+    parent_index += (PATTERN_SIZE//2)
+    parent_index %= PATTERN_SIZE
+
+    # Set the child index to the same as the parent. From this point on, both indexes can move
+    # independently (they don't always need to)
+    child_index = parent_index
+
+    # Iterate whil the child has unasigned indexes (contains a '-1')
+    while -1 in child_candidate:
+        # If the value at parent_index is already in the child, go to the next index
+        if parent_candidate_2[parent_index] in child_candidate:
+            parent_index += 1
+            parent_index %= PATTERN_SIZE
+        # Else add it to the child and move both indexes
+        else:
+            child_candidate[child_index] = parent_candidate_2[parent_index]
+            child_index += 1
+            child_index %= PATTERN_SIZE
+            parent_index += 1
+            parent_index %= PATTERN_SIZE
 
     return child_candidate
 
+#########################################
+##### Full AI Genetic Algorithm Loop ####
+#########################################
+
 if __name__ == "__main__":
+
+    HISTORY.append(INITIAL_GUESS)
     generation = []
 
+    # This will be set to True if, and only if, one of the candidates has a value of p equal to
+    # PATTERN_SIZE. This means all colours are at the right place
+    solution_found = False
+
+    
     for i in range(POPULATION_SIZE):
         generation.append([random.randint(0, NUMBER_OF_COLOURS-1) for _ in range(PATTERN_SIZE)])
 
-    print("Solution")
-    print(TO_GUESS)
-    print("Generation")
-    print(select_m_best(generation))
