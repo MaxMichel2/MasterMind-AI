@@ -22,3 +22,17 @@ Each component is clearly identifiable and the way each of them work is explaine
 ## Running the code
 
 To run the code, simply clone this repository on your machine, open a terminal/cmd, navigate to the cloned folder and run the following: `python MasterMind-AI.py`
+
+### Extra control
+
+There are 7 different parameters that can be modified directly at the command line for you to tailor the behavious of the program:
+* PATTERN_SIZE
+* NUMBER_OF_COLOURS
+* POPULATION_SIZE
+* MAX_GENERATION
+* MAX_SIZE
+* MUTATION_PROBABILITY
+* CROSSOVER_PROBABILITY
+
+*PATTERN_SIZE* controls the length of the code that the AI has to guess
+*NUMBER_OF_COLOURS* controls the number of different "colours" each code can contain
