@@ -2,22 +2,20 @@ import collections
 import math
 import random
 import sys
-from tabulate import tabulate
 from itertools import accumulate
 
 # Global Variables
 
-NUMBER_OF_COLOURS = 8
 PATTERN_SIZE = 4
-POPULATION_SIZE = 150
-MAX_GENERATION = 100
+NUMBER_OF_COLOURS = 8
+POPULATION_SIZE = 100
+MAX_GENERATION = 20
 MAX_SIZE = 60
-FITNESS_THRESHOLD = 0.2
 MUTATION_PROBABILITY = 0.02
-CROSSOVER_PROBABILITY = 0.2
+CROSSOVER_PROBABILITY = 0.02
 
-TO_GUESS = [random.randint(0, NUMBER_OF_COLOURS-1) for _ in range(PATTERN_SIZE)]
-INITIAL_GUESS = [random.randint(0, NUMBER_OF_COLOURS-1) for _ in range(PATTERN_SIZE)]
+TO_GUESS = []
+INITIAL_GUESS = []
 HISTORY = []
 
 #########################################
@@ -184,32 +182,26 @@ the lowest fitness
 
 def select_m_best(generation):
 
-    # Get random limit
-    limit = random.uniform(0, FITNESS_THRESHOLD)
-
     # Will be used to store the candidates and their fitness
-    candidate_info_list = []
-
-    #For the normalization
-    total_fitness = 0
+    m_best = []
 
     for i in range(POPULATION_SIZE):
         candidate_fitness = fitness(generation[i])
-        total_fitness += candidate_fitness
-        candidate_info_list.append((candidate_fitness, generation[i]))
+        m_best.append((candidate_fitness, generation[i]))
 
     # Sort the list and divide their fitness to get a normalized value
-    candidate_info_list = sorted(candidate_info_list, key=lambda element: element[0])
-    candidate_info_list = [((candidate_info[0]/total_fitness), candidate_info[1]) for candidate_info in candidate_info_list]
+    m_best = sorted(m_best, key=lambda element: element[0])
+    fitness_values = [candidate_info[0] for candidate_info in m_best]
 
-    # Accumulate the normalized fitness values
-    accumulated_fitness = list(accumulate([candidate_info[0] for candidate_info in candidate_info_list]))
+    if 0 not in fitness_values:
+        return [m_best[0][1]]
+    
+    try:
+        first_non_null_value = next(x[0] for x in enumerate(fitness_values) if x[1] > 0)
+    except StopIteration:
+        first_non_null_value = len(m_best)
 
-    # Find the index of the value closest to the limit
-    closest_to_limit = min(enumerate(accumulated_fitness), key=lambda element: abs(element[1] - limit))
-
-    # Return the candidates with a cumulative fitness less than the limit
-    return [candidate_info[1] for candidate_info in candidate_info_list[:closest_to_limit[0]]]
+    return [candidate_info[1] for candidate_info in m_best[:first_non_null_value]]
 
 # Question 2 #
 # Propose one or more simple mutation operations on a candidate solution
@@ -311,12 +303,31 @@ def generate_new_population(generation):
     return new_generation
 
 if __name__ == "__main__":
+
+    if len(sys.argv) > 8:
+        print("Only 7 variables can be set:\n\tPATTERN_SIZE (default = 4)\n\tNUMBER_OF_COLOURS (default = 8)\n\tPOPULATION_SIZE (default = 100)\n\tMAX_GENERATION (default = 20)\n\tMAX_SIZE (default = 60)\n\tMUTATION_PROBABILITY (default = 0.02)\n\tCROSSOVER_PROBABILITY (default = 0.02)")
+        exit(1)
+    else:
+        global_variables = [-1 for _ in range(7)]
+        for i in range(1, len(sys.argv)):
+            global_variables[i-1] = int(sys.argv[i])
+
+        PATTERN_SIZE = global_variables[0] if global_variables[0] != -1 else 4
+        NUMBER_OF_COLOURS = global_variables[1] if global_variables[1] != -1 else 8
+        POPULATION_SIZE = global_variables[2] if global_variables[2] != -1 else 100
+        MAX_GENERATION = global_variables[3] if global_variables[3] != -1 else 20
+        MAX_SIZE = global_variables[4] if global_variables[4] != -1 else 60
+        MUTATION_PROBABILITY = global_variables[5] if global_variables[5] != -1 else 0.02
+        CROSSOVER_PROBABILITY = global_variables[6] if global_variables[6] != -1 else 0.02
+
+        TO_GUESS = [random.randint(0, NUMBER_OF_COLOURS-1) for _ in range(PATTERN_SIZE)]
+        INITIAL_GUESS = [random.randint(0, NUMBER_OF_COLOURS-1) for _ in range(PATTERN_SIZE)]
     
     iteration_counter = 0
     guess_p, guess_m = get_pins(INITIAL_GUESS)
 
     iteration_candidates = []
-    
+
     while guess_p != PATTERN_SIZE:
         HISTORY.append(INITIAL_GUESS)
         iteration_counter += 1
@@ -337,7 +348,6 @@ if __name__ == "__main__":
         
         guess_index = random.randint(0, len(iteration_candidates)-1)
         guess = iteration_candidates[guess_index]
-        print(fitness(guess))
         HISTORY.append(guess)
         guess_p, guess_m = get_pins(guess)
         print("Guess at iteration", iteration_counter," is", guess)
