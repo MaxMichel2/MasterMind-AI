@@ -1,14 +1,20 @@
-import random
-import math
-import sys
 import collections
+import math
+import random
+import sys
+from tabulate import tabulate
+from itertools import accumulate
 
 # Global Variables
 
 NUMBER_OF_COLOURS = 8
 PATTERN_SIZE = 4
-POPULATION_SIZE = 100
-MAX_GENERATION = 100000
+POPULATION_SIZE = 150
+MAX_GENERATION = 100
+MAX_SIZE = 60
+FITNESS_THRESHOLD = 0.2
+MUTATION_PROBABILITY = 0.02
+CROSSOVER_PROBABILITY = 0.02
 
 TO_GUESS = [random.randint(0, NUMBER_OF_COLOURS-1) for _ in range(PATTERN_SIZE)]
 INITIAL_GUESS = [random.randint(0, NUMBER_OF_COLOURS-1) for _ in range(PATTERN_SIZE)]
@@ -160,34 +166,58 @@ def fitness(current_candidate):
 # create the next generation of candidates
 
 """
-Get the (p, m) values for the N candidates, order them in descending order for the values of 'p' then
-the values of 'm' then choose the best half of candidates
+Evaluate the fitness of each candidate in a generation, normalize the fitness to have values between
+0 and 1. Sort the population in order of fitness (in our case it would be descending but it is 
+important to note that usually we aim for a high fitness, it often depends on how we imagine our
+fitness function).
+
+Determine the accumulated fitness and then select a random value between 0 and 1 which will be our
+limit and we will return the m best candidates that are below said limit.
+
+OR return the candidates with a fitness of 0. If there are none, return the single candidate with
+the lowest fitness
 """
 
 def select_m_best(generation):
 
-    temporary_list = []
+    # Get random limit
+    limit = random.uniform(0, FITNESS_THRESHOLD)
 
-    # Iterate through all the candidates of the generation
-    for i in range(len(generation)):
-        p, m = get_pins(generation[i])
-        temporary_list.append((p, m, generation[i]))
+    # Will be used to store the candidates and their fitness
+    candidate_info_list = []
 
-    # Sort the (p, m) for each candidate by p then m
-    sorted_candidates = sorted(temporary_list, key=lambda element: (element[0], element[1]), reverse=True)
+    #For the normalization
+    total_fitness = 0
 
-    # Select the 3rd element in the tuple in the sorted list (the actual candidate) and return them
-    # as a list
-    return [candidate_info[2] for candidate_info in sorted_candidates[:len(sorted_candidates)//2]]
+    for i in range(POPULATION_SIZE):
+        candidate_fitness = fitness(generation[i])
+        total_fitness += candidate_fitness
+        candidate_info_list.append((candidate_fitness, generation[i]))
+
+    # Sort the list and divide their fitness to get a normalized value
+    candidate_info_list = sorted(candidate_info_list, key=lambda element: element[0])
+    candidate_info_list = [((candidate_info[0]/total_fitness), candidate_info[1]) for candidate_info in candidate_info_list]
+
+    # Accumulate the normalized fitness values
+    accumulated_fitness = list(accumulate([candidate_info[0] for candidate_info in candidate_info_list]))
+
+    # Find the index of the value closest to the limit
+    closest_to_limit = min(enumerate(accumulated_fitness), key=lambda element: abs(element[1] - limit))
+
+    # Return the candidates with a cumulative fitness less than the limit
+    return [candidate_info[1] for candidate_info in candidate_info_list[:closest_to_limit[0]]]
 
 # Question 2 #
 # Propose one or more simple mutation operations on a candidate solution
 
 """
 Choose two positions in the candidate and swap them
+OR
+Replace the colour at one random index
 """
 
 def mutate(candidate):
+    """
     # Choose two random indexes
     random_indexes = random.sample(range(PATTERN_SIZE), 2)
 
@@ -196,6 +226,14 @@ def mutate(candidate):
     candidate[random_indexes[0]] = candidate[random_indexes[1]]
     candidate[random_indexes[1]] = temp
     print(candidate)
+    """
+    random_index = random.randint(0, PATTERN_SIZE-1)
+    random_colour = random.randint(0, NUMBER_OF_COLOURS-1)
+
+    while random_colour != candidate[random_index]:
+        random_colour = random.randint(0, NUMBER_OF_COLOURS-1)
+
+    candidate[random_index] = random_colour
 
     return candidate
 
@@ -226,23 +264,11 @@ def crossover(parent_candidate_1, parent_candidate_2):
     parent_index += (PATTERN_SIZE//2)
     parent_index %= PATTERN_SIZE
 
-    # Set the child index to the same as the parent. From this point on, both indexes can move
-    # independently (they don't always need to)
-    child_index = parent_index
-
     # Iterate whil the child has unasigned indexes (contains a '-1')
     while -1 in child_candidate:
-        # If the value at parent_index is already in the child, go to the next index
-        if parent_candidate_2[parent_index] in child_candidate:
-            parent_index += 1
-            parent_index %= PATTERN_SIZE
-        # Else add it to the child and move both indexes
-        else:
-            child_candidate[child_index] = parent_candidate_2[parent_index]
-            child_index += 1
-            child_index %= PATTERN_SIZE
-            parent_index += 1
-            parent_index %= PATTERN_SIZE
+        child_candidate[parent_index] = parent_candidate_2[parent_index]
+        parent_index += 1
+        parent_index %= PATTERN_SIZE
 
     return child_candidate
 
@@ -250,16 +276,67 @@ def crossover(parent_candidate_1, parent_candidate_2):
 ##### Full AI Genetic Algorithm Loop ####
 #########################################
 
-if __name__ == "__main__":
+def intialise_population():
 
-    HISTORY.append(INITIAL_GUESS)
-    generation = []
+    return [[random.randint(0, NUMBER_OF_COLOURS-1) for _ in range(PATTERN_SIZE)] for _ in range(POPULATION_SIZE)]
 
-    # This will be set to True if, and only if, one of the candidates has a value of p equal to
-    # PATTERN_SIZE. This means all colours are at the right place
-    solution_found = False
-
+def generate_new_population(generation):
     
-    for i in range(POPULATION_SIZE):
-        generation.append([random.randint(0, NUMBER_OF_COLOURS-1) for _ in range(PATTERN_SIZE)])
+    new_generation = []
 
+    for i in range(len(generation)):
+        new_generation.append(generation[i])
+
+    for i in range(len(generation)):
+        if len(new_generation) < POPULATION_SIZE:
+            mutation = random.random()
+            if mutation <= MUTATION_PROBABILITY:
+                new_generation.append(mutate(generation[i]))
+            
+            cross = random.random()
+            if cross <= CROSSOVER_PROBABILITY:
+                parent_1 = generation[i]
+                parent_2 = generation[(i+1)%len(generation)]
+                new_generation.append(crossover(parent_1, parent_2))
+
+    while len(new_generation) < POPULATION_SIZE:
+        random_candidate = [random.randint(0, NUMBER_OF_COLOURS-1) for _ in range(PATTERN_SIZE)]
+        if random_candidate not in new_generation:
+            new_generation.append(random_candidate)
+    
+    return new_generation
+
+if __name__ == "__main__":
+    
+    iteration_counter = 0
+    guess_p, guess_m = get_pins(INITIAL_GUESS)
+
+    iteration_candidates = []
+    
+    while guess_p != PATTERN_SIZE:
+        HISTORY.append(INITIAL_GUESS)
+        iteration_counter += 1
+        generation_counter = 1
+        generation = intialise_population()
+        print("Current iteration:", iteration_counter)
+
+        while generation_counter <= MAX_GENERATION and len(iteration_candidates) <= MAX_SIZE:
+            generation = generate_new_population(generation)
+            print("Current generation:", generation_counter)
+            generation = select_m_best(generation)
+
+            for candidate in generation:
+                if candidate not in iteration_candidates:
+                    iteration_candidates.append(candidate)
+            
+            generation_counter += 1
+        
+        guess_index = random.randint(0, len(iteration_candidates)-1)
+        guess = iteration_candidates[guess_index]
+        HISTORY.append(guess)
+        guess_p, guess_m = get_pins(guess)
+        print("Guess at iteration", iteration_counter," is", guess)
+        iteration_candidates = []
+    
+    print("Guessed correctly after", iteration_counter, "iterations")
+    print("Solution:", TO_GUESS)
