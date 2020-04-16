@@ -14,7 +14,7 @@ MAX_GENERATION = 100
 MAX_SIZE = 60
 FITNESS_THRESHOLD = 0.2
 MUTATION_PROBABILITY = 0.02
-CROSSOVER_PROBABILITY = 0.02
+CROSSOVER_PROBABILITY = 0.2
 
 TO_GUESS = [random.randint(0, NUMBER_OF_COLOURS-1) for _ in range(PATTERN_SIZE)]
 INITIAL_GUESS = [random.randint(0, NUMBER_OF_COLOURS-1) for _ in range(PATTERN_SIZE)]
@@ -174,9 +174,13 @@ fitness function).
 Determine the accumulated fitness and then select a random value between 0 and 1 which will be our
 limit and we will return the m best candidates that are below said limit.
 
-OR return the candidates with a fitness of 0. If there are none, return the single candidate with
+OR 
+
+Return the candidates with a fitness of 0. If there are none, return the single candidate with
 the lowest fitness
 """
+
+########## DO THE SECOND SELECTION THING BECAUSE IT WILL WORK BETTER (Hopefully)
 
 def select_m_best(generation):
 
@@ -333,6 +337,7 @@ if __name__ == "__main__":
         
         guess_index = random.randint(0, len(iteration_candidates)-1)
         guess = iteration_candidates[guess_index]
+        print(fitness(guess))
         HISTORY.append(guess)
         guess_p, guess_m = get_pins(guess)
         print("Guess at iteration", iteration_counter," is", guess)
