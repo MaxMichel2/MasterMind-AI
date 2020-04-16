@@ -264,7 +264,7 @@ def crossover(parent_candidate_1, parent_candidate_2):
     parent_index += (PATTERN_SIZE//2)
     parent_index %= PATTERN_SIZE
 
-    # Iterate whil the child has unasigned indexes (contains a '-1')
+    # Iterate while the child has unasigned indexes (contains a '-1')
     while -1 in child_candidate:
         child_candidate[parent_index] = parent_candidate_2[parent_index]
         parent_index += 1
