@@ -342,6 +342,14 @@ def generate_new_population(generation):
         random_candidate = [random.randrange(0, NUMBER_OF_COLOURS) for _ in range(PATTERN_SIZE)]
         if random_candidate not in new_generation:
             new_generation.append(random_candidate)
+    
+    # This avoids the new generation from containing candidates that have already been guessed.
+    # If they've been guessed and the algorithm is still running, they're not correct so shouldn't be
+    # tried again. Since they're in HISTORY, the fact they are somewhat close will be used to evalute
+    # new candidates in the fitness calculation
+    for i in range(len(new_generation)):
+        while new_generation[i] in HISTORY:
+            new_generation[i] = [random.randrange(0, NUMBER_OF_COLOURS) for _ in range(PATTERN_SIZE)]
 
     return new_generation
 
