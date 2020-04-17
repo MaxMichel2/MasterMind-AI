@@ -296,29 +296,53 @@ def generate_new_population(generation):
     
     new_generation = []
 
-    # Crossover first 
-    for i in range(len(generation)):       
-        cross = random.random()
-        if cross <= CROSSOVER_PROBABILITY:
-            parent_1 = generation[i]
-            parent_2 = generation[(i+1)%len(generation)]
-            child_candidate = crossover(parent_1, parent_2)
-            new_generation.append(child_candidate)
-        else:
-            new_generation.append(generation[i])
-            
-        # Then mutation
-        mutation = random.random()
-        if mutation <= MUTATION_PROBABILITY:
-            new_generation.append(mutate(generation[i]))
-        else:
-            new_generation.append(generation[i])
+    # Select (1-CROSSOVER_PROBABILITY) % of the candidates to copy directly to the next generation
+    number_of_candidates_to_copy = math.ceil(len(generation)*(1-CROSSOVER_PROBABILITY))
 
+    # Allows to always have a pair number of candidates to undergo crossover
+    if (len(generation) - number_of_candidates_to_copy)%2 != 0:
+        number_of_candidates_to_copy -= 1
+    copy_candidates_indexes = random.sample(list(range(0, len(generation))), number_of_candidates_to_copy)
+    
+    for index in copy_candidates_indexes:
+        new_generation.append(generation[index])
+
+    # Remaining candidates will produce offspring
+    crossover_candidates_indexes = []
+
+    # Extract the remaining candidates  
+    for i in range(len(generation)):       
+        if i not in copy_candidates_indexes:
+            crossover_candidates_indexes.append(i)
+
+    # Shuffle the indexes of the candidates to undergo the crossover process and split the list in 
+    # half
+    random.shuffle(crossover_candidates_indexes)
+    parent_1_indexes = crossover_candidates_indexes[:len(crossover_candidates_indexes)//2]
+    parent_2_indexes = crossover_candidates_indexes[len(crossover_candidates_indexes)//2:]
+
+    # Since crossover() only produces one child, repeat the function call but swap the parents to get
+    # two different offspring
+    for i in range(len(parent_1_indexes)):
+        child_candidate_1 = crossover(generation[parent_1_indexes[i]], generation[parent_2_indexes[i]])
+        child_candidate_2 = crossover(generation[parent_2_indexes[i]], generation[parent_1_indexes[i]])
+        new_generation.append(child_candidate_1)
+        new_generation.append(child_candidate_2)
+
+    # Once a new population has been created, the population must undergo the mutation process to 
+    # avoid the algorithm getting stuck in a local optima
+    for i in range(len(new_generation)):
+        mutation_chance = random.random()
+        if mutation_chance <= MUTATION_PROBABILITY:
+            new_generation[i] = mutate(new_generation[i])
+    
+    # Since the generation given to this function will "never" be of size POPULATION_SIZE, fill
+    # the rest of population with random candidates
     while len(new_generation) < POPULATION_SIZE:
         random_candidate = [random.randrange(0, NUMBER_OF_COLOURS) for _ in range(PATTERN_SIZE)]
         if random_candidate not in new_generation:
             new_generation.append(random_candidate)
-    
+
     return new_generation
 
 # Main loop
@@ -347,7 +371,7 @@ CROSSOVER_PROBABILITY (default = 0.7)")
         MAX_GENERATION = int(global_variables[3]) if int(global_variables[3]) != -1 else 20
         MAX_SIZE = int(global_variables[4]) if int(global_variables[4]) != -1 else 60
         MUTATION_PROBABILITY = float(global_variables[5]) if float(global_variables[5]) != -1 else 0.02
-        CROSSOVER_PROBABILITY = float(global_variables[6]) if float(global_variables[6]) != -1 else 0.02
+        CROSSOVER_PROBABILITY = float(global_variables[6]) if float(global_variables[6]) != -1 else 0.7
 
         # Set up an initial code and guess
         TO_GUESS = [random.randrange(0, NUMBER_OF_COLOURS) for _ in range(PATTERN_SIZE)]
@@ -358,6 +382,9 @@ CROSSOVER_PROBABILITY (default = 0.7)")
     iteration_counter = 0
     guess_p, guess_m = get_pins(INITIAL_GUESS)
     iteration_candidates = []
+    #HISTORY.append(INITIAL_GUESS) # Testing purpose
+    #generation = intialise_population()
+    #generation = generate_new_population(generation)
 
     # Run while all pins aren't correctly placed
     while guess_p != PATTERN_SIZE:
@@ -369,7 +396,8 @@ CROSSOVER_PROBABILITY (default = 0.7)")
 
         # While we haven't gone through the sepcified number of generations and found enough candidates
         while generation_counter <= MAX_GENERATION and len(iteration_candidates) <= MAX_SIZE:
-            generation = generate_new_population(generation) # Modify current generation
+            if generation_counter != 1:
+                generation = generate_new_population(generation) # Modify current generation
             print("Current generation:", generation_counter)
             generation = select_m_best(generation) # Choose the best candidates
 
@@ -377,7 +405,7 @@ CROSSOVER_PROBABILITY (default = 0.7)")
             for candidate in generation:
                 if candidate not in iteration_candidates:
                     iteration_candidates.append(candidate)
-            
+
             generation_counter += 1
         
         # Choose a random candidate from those available, guess it and add it to the history

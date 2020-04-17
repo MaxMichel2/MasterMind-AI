@@ -33,8 +33,3 @@ There are 7 different parameters that can be modified directly at the command li
 * *MAX_SIZE* controls the maximum amount of eligible candidates per iteration. If the algorithm finds more than `MAX_SIZE` eligible candidates, it will stop to take a guess
 * *MUTATION_PROBABILITY* controls the probability of mutation in the algorithm
 * *CROSSOVER_PROBABILITY* controls the probability of crossover in the algorithm
-
-## Improvements
-
-* Work on the generation of a new population
-    * Attempt Fitness Proportionate Selection for Crossover
