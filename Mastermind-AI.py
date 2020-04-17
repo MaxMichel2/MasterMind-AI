@@ -417,8 +417,15 @@ CROSSOVER_PROBABILITY (default = 0.7)")
             generation_counter += 1
         
         # Choose a random candidate from those available, guess it and add it to the history
+        
         guess_index = random.randint(0, len(iteration_candidates)-1)
         guess = iteration_candidates[guess_index]
+
+        # If the chosen candidate has already been guessed, choose a new one
+        while guess in HISTORY:
+            guess_index = random.randint(0, len(iteration_candidates)-1)
+            guess = iteration_candidates[guess_index]
+        
         HISTORY.append(guess)
         guess_p, guess_m = get_pins(guess) # Extract the 'p' and 'm' from the guess
         print("Guess at iteration", iteration_counter," is", guess)
